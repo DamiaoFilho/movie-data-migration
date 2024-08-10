@@ -1,5 +1,5 @@
 from django.db import models
-from ..movies.models import Movie
+from movies.models import Movie
 
 # Create your models here.
 class Link(models.Model):

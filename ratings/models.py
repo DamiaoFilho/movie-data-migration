@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from ..movies.models import Movie
+from movies.models import Movie
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
