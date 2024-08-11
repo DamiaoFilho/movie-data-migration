@@ -6,8 +6,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Rating(models.Model):
-    movieId = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
-    userId = models.IntegerField(verbose_name="ID do Usuário")  
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
+    user_id = models.IntegerField(verbose_name="ID do Usuário")  
     rating = models.FloatField(
         verbose_name="Avaliação",
         validators=[
@@ -18,4 +18,4 @@ class Rating(models.Model):
     timestamp = models.DateTimeField()  
 
     def __str__(self):
-        return f'User {self.userId} - Movie {self.movieId}: {self.rating}'
+        return f'User {self.user_id} - Movie {self.movie}: {self.rating}'
