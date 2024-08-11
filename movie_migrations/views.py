@@ -30,7 +30,7 @@ class CSVHandlerMixIn:
         decoded_file = file.read().decode('utf-8').splitlines()
         reader = csv.DictReader(decoded_file)
         
-        batch_size = 2500 
+        batch_size = 10000 
         rows = []
 
         print('Iniciando a leitura do arquivo')
