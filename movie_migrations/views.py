@@ -1,5 +1,6 @@
+from django.db.models.query import QuerySet
 from django.http import HttpResponse
-from django.views.generic import FormView
+from django.views.generic import FormView, ListView
 from .forms import MigrationForm
 import csv
 from movies.models import Movie
@@ -12,6 +13,8 @@ import time
 from django.db import connection
 import re
 from .models import MovieMigration
+from django_filters.views import FilterView
+from .filtersets import MigrationFilterSet
 
 class CSVHandlerMixIn:
     
@@ -252,17 +255,30 @@ class MigrationView(FormView, CSVHandlerMixIn):
     success_url = "/"
     
     def form_valid(self, form):
-        if form.cleaned_data['movies']:
-            self.handle_movie_file(form.cleaned_data['movies'], Movie, ['id', 'title', 'genres'])
-        if form.cleaned_data['ratings']:
-            self.handle_movie_depedent_file(form.cleaned_data['ratings'], Rating, ['user_id', 'movie_id', 'rating', 'timestamp'])
-        if form.cleaned_data['links']:
-            self.handle_link_file(form.cleaned_data['links'], Link, ['movie_id', 'imdb_id', 'tmdb_id'])
-        if form.cleaned_data['tags']:
-            self.handle_movie_depedent_file(form.cleaned_data['tags'], Tag, ['user_id', 'movie_id', 'tag', 'timestamp'])
-        if form.cleaned_data['genome_tags']:
-            self.handle_tag_depedent_file(form.cleaned_data['genome_tags'], GenomeTag, ['tag_id', 'tag_details'])
-        if form.cleaned_data['genome_scores']:
-            self.handle_tag_depedent_file(form.cleaned_data['genome_scores'], GenomeScore,  ['movie_id', 'tag_id', 'relevance'])
+        data_type = form.cleaned_data['data_type']
+        file = form.cleaned_data['file']
+        
+        if data_type == 'movie':
+            self.handle_movie_file(file, Movie, ['id', 'title', 'genres'])
+        if data_type == 'ratings':
+            self.handle_movie_depedent_file(file, Rating, ['user_id', 'movie_id', 'rating', 'timestamp'])
+        if data_type == 'links':
+            self.handle_link_file(file, Link, ['movie_id', 'imdb_id', 'tmdb_id'])
+        if data_type == 'tags':
+            self.handle_movie_depedent_file(file, Tag, ['user_id', 'movie_id', 'tag', 'timestamp'])
+        if data_type == 'genome_tags':
+            self.handle_tag_depedent_file(file, GenomeTag, ['tag_id', 'tag_details'])
+        if data_type == 'genome_scores':
+            self.handle_tag_depedent_file(file, GenomeScore,  ['movie_id', 'tag_id', 'relevance'])
         
         return super().form_valid(form)
+
+class InfoFile(FilterView):
+    template_name = "migrations/migration_list.html"
+    model = MovieMigration
+    paginate_by = 1
+    filterset_class = MigrationFilterSet
+    context_object_name = 'migrations'
+    
+    def get_queryset(self):
+        return MovieMigration.objects.all()

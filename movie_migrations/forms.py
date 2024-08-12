@@ -1,9 +1,13 @@
 from django import forms
 
 class MigrationForm(forms.Form):
-    movies = forms.FileField(label="Filmes", required=False)
-    ratings = forms.FileField(label="Avaliações", required=False)
-    links = forms.FileField(label="Links", required=False)
-    tags = forms.FileField(label="Tags", required=False)
-    genome_tags = forms.FileField(label="Genome Tags", required=False)
-    genome_scores = forms.FileField(label="Genome Scores", required=False)
+    DATA_TYPE_CHOICES = [
+        ('movie', 'Filme'),
+        ('links', 'Link'),
+        ('tags', 'Tag'),
+        ('ratings', 'Avaliação'),
+        ('genome_tags', 'Genome Tags'),
+        ('genome_scores', 'Genome Scores'),
+    ]
+    data_type = forms.ChoiceField(label="Tipo", choices=DATA_TYPE_CHOICES)    
+    file = forms.FileField(label="Arquivo")
