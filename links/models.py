@@ -9,3 +9,7 @@ class Link(models.Model):
 
     def __str__(self):
         return f'Links for Movie {self.movie}'
+    
+    class Meta:
+        verbose_name = "Link"
+        verbose_name_plural = "Links"

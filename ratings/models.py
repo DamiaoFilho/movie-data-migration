@@ -19,3 +19,7 @@ class Rating(models.Model):
 
     def __str__(self):
         return f'User {self.user_id} - Movie {self.movie}: {self.rating}'
+    
+    class Meta:
+        verbose_name = "Avaliação"
+        verbose_name_plural = "Avaliações"

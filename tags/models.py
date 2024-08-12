@@ -27,6 +27,10 @@ class GenomeScore(models.Model):
     
     def __str__(self) -> str:
         return f'{self.movie} - {self.tag}: {self.relevance}'
+    
+    class Meta:
+        verbose_name = "Pontuação do Genoma"
+        verbose_name_plural = "Pontuações do Genoma"
 
 
 class GenomeTag(models.Model):
@@ -35,3 +39,8 @@ class GenomeTag(models.Model):
 
     def __str__(self):
         return f'{self.tag}: {self.tag_details}'
+
+
+    class Meta:
+        verbose_name = "Tag do Genoma"
+        verbose_name_plural = "Tags do Genoma"

@@ -11,4 +11,8 @@ class MovieMigration(models.Model):
     
     
     def __str__(self) -> str:
-        return f'{self.file} - {self.total_time} - {self.data_quantity} - {self.registry_erros_number}'
+        return f'{self.file}: {self.total_time} - {self.model}'
+    
+    class Meta:
+        verbose_name = "Migração de Dados"
+        verbose_name_plural = "Migrações de Dados"

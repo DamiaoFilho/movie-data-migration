@@ -86,6 +86,7 @@ class CSVHandlerMixIn:
         batch_size = 10000 
         rows = []
         failures = 0
+        data_count = 0
         
         movies_dict = [movie.id for movie in Movie.objects.all()]
 
@@ -94,6 +95,7 @@ class CSVHandlerMixIn:
             if self.csv_validator(row, model, movies_dict):
                 values = list(row.values())
                 rows.append(values)
+                data_count += 1
             else:
                 failures += 1
              
@@ -106,7 +108,7 @@ class CSVHandlerMixIn:
             self.bulk_insert(model, rows, columns)
     
         end = time.time()
-        self.create_log(end-start, len(rows), failures, file, model)
+        self.create_log(end-start, data_count, failures, file, model)
 
     def handle_movie_depedent_file(self, file, model, columns):
         start = time.time()
@@ -119,6 +121,7 @@ class CSVHandlerMixIn:
         batch_size = 10000 
         rows = []
         failures = 0
+        data_count = 0
 
         print('Iniciando a leitura do arquivo')
         for row in reader:
@@ -136,6 +139,7 @@ class CSVHandlerMixIn:
                     if timestamp:
                         values.append(timestamp)    
                     rows.append(values)
+                    data_count += 1
                 else:
                     failures += 1
             else:
@@ -151,7 +155,7 @@ class CSVHandlerMixIn:
             self.bulk_insert(model, rows, columns)
         
         end = time.time()
-        self.create_log(end-start, len(rows), failures, file, model)
+        self.create_log(end-start, data_count, failures, file, model)
     
     
     def handle_link_file(self, file, model, columns):
@@ -165,6 +169,7 @@ class CSVHandlerMixIn:
         batch_size = 10000 
         rows = []
         failures = 0
+        data_count = 0
 
         print('Iniciando a leitura do arquivo')
         for row in reader:
@@ -174,6 +179,7 @@ class CSVHandlerMixIn:
                 if self.csv_validator(row, model, movies_dict):
                     values = list(row.values()) 
                     rows.append(values)
+                    data_count += 1
                 else:
                     failures += 1
             else:
@@ -189,7 +195,7 @@ class CSVHandlerMixIn:
             self.bulk_insert(model, rows, columns)
         
         end = time.time()
-        self.create_log(end-start, len(rows), failures, file, model)
+        self.create_log(end-start, data_count, failures, file, model)
     
     def bulk_insert(self, model, rows, columns):
         table_name = model._meta.db_table
@@ -210,6 +216,7 @@ class CSVHandlerMixIn:
         batch_size = 10000 
         rows = []
         failures = 0
+        data_count = 0
         
         reader = csv.DictReader(decoded_file)
         for row in reader:
@@ -218,6 +225,7 @@ class CSVHandlerMixIn:
                 if self.csv_validator(row, model, movies_dict):
                     values = list(row.values())
                     rows.append(values)
+                    data_count += 1
                 else:
                     failures += 1
             else:
@@ -233,10 +241,10 @@ class CSVHandlerMixIn:
             self.bulk_insert(model, rows, columns)
                 
         end = time.time()
-        self.create_log(end-start, len(rows), failures, file, model)
+        self.create_log(end-start, data_count, failures, file, model)
     
     def create_log(self, time, data_quantity, registry_erros_number, file, model):
-        MovieMigration.objects.create(total_time=time, data_quantity=data_quantity, registry_erros_number=registry_erros_number, file=file, model=model.__name__)
+        MovieMigration.objects.create(total_time=time, data_quantity=data_quantity, registry_erros_number=registry_erros_number, file=file, model=model._meta.verbose_name_plural.title())
 
 class MigrationView(FormView, CSVHandlerMixIn):
     template_name = "base.html"
