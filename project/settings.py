@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'links',
     'ratings',
     'tags',
+    'movie_migrations',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +84,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'movie_data_migration',
         'USER': 'postgres',
-        'PASSWORD': '3214',
+        'PASSWORD': 'root',
         'HOST': 'localhost', 
         'PORT': '5432', 
     }
@@ -124,6 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Arquivo</h1>
+
+<div class="main-content">
+
+    <table>
+        <thead>
+            <tr>
+              <th>Arquivo</th>
+              <th>Tempo de processamento</th>
+              <th>Dados inseridos</th>
+              <th>Registros com problemas</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for info in file %}
+            <tr>
+                <td>{{ file}}</td>
+                <td>{{ info.total_time }}</td>
+                <td>{{ info.data_quantity }}</td>
+                <td>{{ info.registry_erros_number }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

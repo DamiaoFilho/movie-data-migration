@@ -1,10 +1,11 @@
 from django.http import HttpResponse
-from django.views.generic import FormView
+from django.views.generic import FormView, ListView
 from .forms import MigrationForm
 import csv
 from movies.models import Movie
 from ratings.models import Rating
-from tags.models import Tag
+from tags.models import Tag, GenomeTag, GenomeScore
+from links.models import Link
 import datetime
 import pytz
 import time
@@ -64,10 +65,15 @@ class MigrationView(FormView, CSVHandlerMixIn):
     
     def form_valid(self, form):
         self.handle_movie_depedent_file(form.cleaned_data['ratings'], Rating)
-        # self.handle_movie_depedent_file(form.cleaned_data['links'], Link)
-        # self.handle_movie_depedent_file(form.cleaned_data['tags'], Tag)
-        # self.handle_csv_file(form.cleaned_data['genome_tags'], GenomeTag)
-            # self.handle_csv_file(form.cleaned_data['genome_scores'], GenomeScore)
-        # self.handle_movie_file(form.cleaned_data['movies'], Movie)
+        self.handle_movie_depedent_file(form.cleaned_data['links'], Link)
+        self.handle_movie_depedent_file(form.cleaned_data['tags'], Tag)
+        self.handle_csv_file(form.cleaned_data['genome_tags'], GenomeTag)
+        self.handle_csv_file(form.cleaned_data['genome_scores'], GenomeScore)
+        self.handle_movie_file(form.cleaned_data['movies'], Movie)
         
         return super().form_valid(form)
+
+class InfoFile(ListView):
+    template_name = "table_file.html"
+    model = Movie
+    context_object_name = "movies"
