@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'links',
     'ratings',
     'tags',
+    'movie_migrations',
 ]
 
 MIDDLEWARE = [

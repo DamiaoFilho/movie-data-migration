@@ -34,4 +34,4 @@ class GenomeTag(models.Model):
     tag_details = models.CharField(max_length=255, verbose_name="Detalhes")  
 
     def __str__(self):
-        return self.tag
+        return f'{self.tag}: {self.tag_details}'

@@ -11,7 +11,7 @@ import pytz
 import time
 from django.db import connection
 import re
-
+from .models import MovieMigration
 
 class CSVHandlerMixIn:
     
@@ -71,7 +71,7 @@ class CSVHandlerMixIn:
             if not re.match(r'^\d+$', row['movieId']):
                 return False
             
-            if int(row['movieId']) in instances:
+            if int(row['movieId']) not in instances:
                 return False
             
             
@@ -106,8 +106,7 @@ class CSVHandlerMixIn:
             self.bulk_insert(model, rows, columns)
     
         end = time.time()
-        print(end-start)
-        return end-start
+        self.create_log(end-start, len(rows), failures, file, model)
 
     def handle_movie_depedent_file(self, file, model, columns):
         start = time.time()
@@ -148,10 +147,11 @@ class CSVHandlerMixIn:
                 rows = []  
 
         if rows:
+            print(f'Inserindo registros')
             self.bulk_insert(model, rows, columns)
         
         end = time.time()
-        return end-start
+        self.create_log(end-start, len(rows), failures, file, model)
     
     
     def handle_link_file(self, file, model, columns):
@@ -185,10 +185,11 @@ class CSVHandlerMixIn:
                 rows = []  
 
         if rows:
+            print(f'Inserindo registros')
             self.bulk_insert(model, rows, columns)
         
         end = time.time()
-        return end-start
+        self.create_log(end-start, len(rows), failures, file, model)
     
     def bulk_insert(self, model, rows, columns):
         table_name = model._meta.db_table
@@ -206,7 +207,6 @@ class CSVHandlerMixIn:
         
         tags_dict = {tag.id: tag.id for tag in Tag.objects.all()}
         movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
-        
         batch_size = 10000 
         rows = []
         failures = 0
@@ -214,12 +214,8 @@ class CSVHandlerMixIn:
         reader = csv.DictReader(decoded_file)
         for row in reader:
             tagId = row.get('tagId', None)
-            
-            
             if int(tagId) in tags_dict.keys():
-                print('Validando')
                 if self.csv_validator(row, model, movies_dict):
-                    print('Validado2')
                     values = list(row.values())
                     rows.append(values)
                 else:
@@ -233,10 +229,14 @@ class CSVHandlerMixIn:
                 rows = []  
                 
         if rows:
+            print(f'Inserindo registros')
             self.bulk_insert(model, rows, columns)
                 
         end = time.time()
-        return end-start
+        self.create_log(end-start, len(rows), failures, file, model)
+    
+    def create_log(self, time, data_quantity, registry_erros_number, file, model):
+        MovieMigration.objects.create(total_time=time, data_quantity=data_quantity, registry_erros_number=registry_erros_number, file=file, model=model.__name__)
 
 class MigrationView(FormView, CSVHandlerMixIn):
     template_name = "base.html"
