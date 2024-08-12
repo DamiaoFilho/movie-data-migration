@@ -1,0 +1,27 @@
+td {
+  padding: 10px;
+  text-align: center;
+}
+
+tr {
+  border: 1px solid black;
+}
+
+.form-content {
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  justify-content: center;
+}
+
+.filter-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

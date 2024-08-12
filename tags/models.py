@@ -5,30 +5,42 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 class Tag(models.Model):
-    movieId = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
-    userId = models.IntegerField(verbose_name="ID do usuário")  
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
+    user_id = models.IntegerField(verbose_name="ID do usuário")  
     tag = models.CharField(max_length=255)  
     timestamp = models.DateTimeField(verbose_name="Data de criação")  
 
     def __str__(self):
-        return f'User {self.userId} - Movie {self.movieId}: {self.tag}'
+        return f'User {self.user_id} - Movie {self.movie}: {self.tag}'
     
 
 class GenomeScore(models.Model):
-    movieId = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
-    tagId = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name="Tag")  
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name="Tag")  
     relevance = models.FloatField(
         verbose_name="Relevância",
         validators=[
-            MinValueValidator(0.5),
-            MaxValueValidator(5.0)
+            MinValueValidator(0.0),
+            MaxValueValidator(1.0)
         ]
     )  
+    
+    def __str__(self) -> str:
+        return f'{self.movie} - {self.tag}: {self.relevance}'
+    
+    class Meta:
+        verbose_name = "Pontuação do Genoma"
+        verbose_name_plural = "Pontuações do Genoma"
 
 
 class GenomeTag(models.Model):
-    tagId = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name="Tag")  
-    tag = models.CharField(max_length=255, verbose_name="Detalhes")  
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name="Tag")  
+    tag_details = models.CharField(max_length=255, verbose_name="Detalhes")  
 
     def __str__(self):
-        return self.tag
+        return f'{self.tag}: {self.tag_details}'
+
+
+    class Meta:
+        verbose_name = "Tag do Genoma"
+        verbose_name_plural = "Tags do Genoma"

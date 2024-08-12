@@ -4,8 +4,9 @@ from django.shortcuts import render
 
 
 from django.urls import path
-from .views import MigrationView
+from .views import MigrationView, InfoFile
 
 urlpatterns = [
-    path("", MigrationView.as_view(), name="migration-form")
+    path("", MigrationView.as_view(), name="migration-form"),
+    path("file", InfoFile.as_view(), name="file-info"),
 ]
