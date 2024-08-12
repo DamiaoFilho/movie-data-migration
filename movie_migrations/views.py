@@ -113,10 +113,13 @@ class CSVHandlerMixIn:
                 values = list(row.values())
                 rows.append(values)
                 
-        if len(rows) >= batch_size:
-            print(f'Inserindo registros')
+            if len(rows) >= batch_size:
+                print(f'Inserindo registros')
+                self.bulk_insert(model, rows, columns)
+                rows = []  
+                
+        if rows:
             self.bulk_insert(model, rows, columns)
-            rows = []  
                 
         end = time.time()
         return end-start
