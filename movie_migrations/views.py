@@ -50,27 +50,24 @@ class MigrationView(FormView):
         
         return super().form_valid(form)
 
-class InfoFile(FilterView):
+class InfoFile(FilterView, ListView):
     template_name = "table_file.html"
     model = MovieMigration
-    paginate_by = 10
+    paginate_by = 15
     filterset_class = MigrationFilterSet
     context_object_name = 'migrations'
-    
-    def get_queryset(self):
-        return MovieMigration.objects.all()
+
     
 class MovieListView(FilterView, ListView):
     model = Movie
     template_name = 'table_movies.html'
     context_object_name = 'movies'
-    paginate_by = 10
+    paginate_by = 15
     filterset_class = MovieFilterSet
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.annotate(
-            average_rating=Avg(GenomeScore.objects.filter(movie_id=models.OuterRef('id')).values('relevance')),
-            rating_count=Count('genomescore')
+        queryset = Movie.objects.all().annotate(
+            rating_avg = Avg('rating__rating'),
+            rating_count = Count('rating')
         )
-        return queryset.all()
+        return queryset
