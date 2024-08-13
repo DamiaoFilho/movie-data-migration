@@ -13,6 +13,10 @@ class Tag(models.Model):
     def __str__(self):
         return f'User {self.user_id} - Movie {self.movie}: {self.tag}'
     
+    class Meta:
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+    
 
 class GenomeScore(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, verbose_name="Filme")  
