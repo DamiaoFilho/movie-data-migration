@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block css %}
+
+<link rel="stylesheet" href="{% static 'css/table.css' %}" />
+
+{% endblock %}
+{% block content %}
+<h1>Arquivos de Migração</h1>
+
+<div class="main-content">
+
+    <form method="get" class="form-filter">
+        <div class="form-content">
+            <div class="form">
+                {{ filter.form.as_p }}
+            </div>
+            <button type="submit">Filtrar</button>
+        </div>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+              <th>Arquivo</th>
+              <th>Status</th>
+              <th>Tempo de processamento</th>
+              <th>Dados inseridos</th>
+              <th>Registros com problemas</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for info in migrations %}
+            <tr>
+                <td>{{ info.file.name }}</td>
+                <td>{{ info.status }}</td>
+                <td>{{ info.total_time }}</td>
+                <td>{{ info.data_quantity }}</td>
+                <td>{{ info.registry_erros_number }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    
+
+</div>
+{% endblock %}

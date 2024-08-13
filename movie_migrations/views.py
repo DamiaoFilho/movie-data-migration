@@ -6,7 +6,9 @@ from links.models import Link
 from tags.models import Tag, GenomeScore, GenomeTag
 from .models import MovieMigration
 from django_filters.views import FilterView
-from .filtersets import MigrationFilterSet
+from django.views.generic import ListView
+from .filtersets import MigrationFilterSet,MovieFilterSet
+from django.db.models import Avg, Count
 from .celery import handle_movie_file, handle_movie_depedent_file, handle_link_file, handle_tag_depedent_file
 
 
@@ -49,7 +51,7 @@ class MigrationView(FormView):
         return super().form_valid(form)
 
 class InfoFile(FilterView):
-    template_name = "migrations/migration_list.html"
+    template_name = "table_file.html"
     model = MovieMigration
     paginate_by = 10
     filterset_class = MigrationFilterSet
@@ -57,3 +59,18 @@ class InfoFile(FilterView):
     
     def get_queryset(self):
         return MovieMigration.objects.all()
+    
+class MovieListView(FilterView, ListView):
+    model = Movie
+    template_name = 'table_movies.html'
+    context_object_name = 'movies'
+    paginate_by = 10
+    filterset_class = MovieFilterSet
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            average_rating=Avg('genomescore__relevance'),
+            rating_count=Count('genomescore')
+        ).select_related('tag')
+        return queryset.all()

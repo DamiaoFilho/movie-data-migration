@@ -117,7 +117,7 @@ nav {
   background-color: var(--quinary-color);
 }
 
-.form-files input {
+.form-files select {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -126,6 +126,8 @@ nav {
   background-color: var(--quinary-color);
   border-radius: 10px;
   cursor: pointer;
+  color: white;
+  outline: none;
 }
 
 .form-files p {
