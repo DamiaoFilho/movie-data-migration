@@ -1,4 +1,5 @@
 
+import sys
 from movies.models import Movie
 from ratings.models import Rating
 from links.models import Link
@@ -12,7 +13,9 @@ import datetime
 import pytz
 from celery import shared_task
 from .models import MovieMigration
+import logging
 
+logger = logging.getLogger(__name__)
     
 def csv_validator(row, model, instances):
     if model == Movie:
@@ -90,6 +93,11 @@ def handle_movie_file(migration_id, columns):
 
     for row in reader:
         if csv_validator(row, Movie, movies_dict):
+            match = re.search(r'\b(19|20)\d{2}\b', row['title'])
+            if match:
+                row['release_year'] = match.group(0)
+            else:
+                row['release_year'] = None
             values = list(row.values())
             rows.append(values)
             data_count += 1

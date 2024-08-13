@@ -43,6 +43,24 @@
         </tbody>
     </table>
 
+    <div class="pagination">
+        {% if is_paginated %}
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                {% endif %}
+
+                <span class="current">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+                {% endif %}
+            </span>
+        {% endif %}
+    </div>
+
     
 
 </div>

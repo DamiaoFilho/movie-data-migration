@@ -38,6 +38,7 @@ main {
   display: flex;
   flex-direction: column;
   margin-top: 40px;
+  align-items: center;
 }
 
 nav {
@@ -123,11 +124,12 @@ nav {
   justify-content: center;
   align-items: center;
   padding: 10px;
-  background-color: var(--quinary-color);
+  background-color: gray;
   border-radius: 10px;
   cursor: pointer;
   color: white;
   outline: none;
+  font-weight: 600;
 }
 
 .form-files p {
