@@ -28,5 +28,4 @@ O projeto utiliza o [MovieLens 20M Dataset](https://grouplens.org/datasets/movie
 
 ## Diagrama Lógico
 
-*Espaço para inserir imagem*
 ![movie_data_migration](https://github.com/user-attachments/assets/dc94d6a0-a590-4e8a-a88e-f391b991141b)
