@@ -4,9 +4,6 @@
   --tertiary-color: #53f57b;
   --quaternary-color: #2dd457;
   --quinary-color: #75757575;
-
-
-
 }
 
 td {
@@ -35,47 +32,48 @@ tr {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: rgb(92, 92, 92);
+  padding: 10px;
+  margin: 20px;
+  border-radius: 8px;
 }
-
 
 table {
   width: 100%;
-  border-collapse: separate; 
-  border-spacing: 10px; 
+  border-collapse: separate;
+  border-spacing: 10px;
 }
 
-th, td {
-  text-align: center; 
-  padding: 10px; 
+th,
+td {
+  text-align: center;
+  padding: 10px;
   /* border-bottom: 1px solid #ddd;  */
 }
 
-
 thead th {
-  background-color: var(--quinary-color); 
-  color: #fff; 
+  background-color: var(--quinary-color);
+  color: #fff;
   font-weight: bold;
   font-size: 10pt;
   /* border-radius: 10px; */
 }
 
 thead th:first-child {
-  border-top-left-radius: 10px; 
+  border-top-left-radius: 10px;
 }
 
 thead th:last-child {
-  border-top-right-radius: 10px; 
+  border-top-right-radius: 10px;
 }
-
 
 tbody tr:nth-child(even) {
-  background-color: rgba(41, 41, 41, 0.89); 
+  background-color: rgba(41, 41, 41, 0.89);
 }
 
-
 tbody tr:hover {
-  background-color: var(--primary-color); 
-  color: #000000; 
+  background-color: var(--primary-color);
+  color: #000000;
 }
 
 .form-filter {
@@ -99,7 +97,7 @@ tbody tr:hover {
   flex-wrap: wrap;
 }
 
-.form-filter div p{
+.form-filter div p {
   display: flex;
   flex-direction: column;
   margin: 5px;
@@ -107,7 +105,8 @@ tbody tr:hover {
   font-size: 10pt;
 }
 
-.form-filter div input, .form-filter div select {
+.form-filter div input,
+.form-filter div select {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -131,5 +130,21 @@ tbody tr:hover {
   cursor: pointer;
   font-weight: 800;
   height: hug(30px);
+}
 
+.step-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.step-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+table {
+  margin: 30px;
 }
