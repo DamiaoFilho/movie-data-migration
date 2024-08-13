@@ -1,255 +1,16 @@
-from django.db.models.query import QuerySet
-from django.http import HttpResponse
-from django.views.generic import FormView, ListView
+from django.views.generic import FormView
 from .forms import MigrationForm
-import csv
 from movies.models import Movie
 from ratings.models import Rating
 from links.models import Link
 from tags.models import Tag, GenomeScore, GenomeTag
-import datetime
-import pytz
-import time
-from django.db import connection
-import re
 from .models import MovieMigration
 from django_filters.views import FilterView
 from .filtersets import MigrationFilterSet
-
-class CSVHandlerMixIn:
-    
-    def csv_validator(self, row, model, instances):
-        if model == Movie:
-            if 'movieId' not in row.keys() or 'title' not in row.keys() or 'genres' not in row.keys():
-                return False
-            
-            if not re.match(r'^\d+$', row['movieId']):
-                return False
-            
-            if int(row['movieId']) in instances:
-                return False
-            
-            if not re.match(r'^[\w\-]+(\|[\w\-]+)*$', row['genres']):
-                return False
+from .celery import handle_movie_file, handle_movie_depedent_file, handle_link_file, handle_tag_depedent_file
 
 
-        elif model == Rating:
-            if 'userId' not in row.keys() or 'rating' not in row.keys():
-                print('Campos faltando')
-                return False
-            
-            if not re.match(r'^\d+$', row['userId']):
-                print('userId invalido')
-                return False
-            
-            
-            if float(row['rating']) < 0 or float(row['rating']) > 5:
-                print('rating invalido')
-                return False
-            
-        elif model == Link:
-            if 'imdbId' not in row.keys() or 'tmdbId' not in row.keys():
-                return False
-            
-            if not re.match(r'^\d+$', row['imdbId']):
-                return False
-            
-            if not re.match(r'^\d+$', row['tmdbId']):
-                return False
-            
-        elif model == Tag:
-            if 'userId' not in row.keys() or 'tag' not in row.keys():
-                return False
-            
-            if not re.match(r'^\d+$', row['userId']):
-                return False
-        
-        elif model == GenomeScore:
-            if 'relevance' not in row.keys() and 'movieId' not in row.keys():
-                return False
-            
-            if float(row['relevance']) < 0 or float(row['relevance']) > 1:
-                return False
-            
-            if not re.match(r'^\d+$', row['movieId']):
-                return False
-            
-            if int(row['movieId']) not in instances:
-                return False
-            
-            
-      
-        return True
-        
-    
-    def handle_movie_file(self, file, model, columns):
-        start = time.time( )
-        decoded_file = file.read().decode('utf-8').splitlines()
-        
-        batch_size = 10000 
-        rows = []
-        failures = 0
-        data_count = 0
-        
-        movies_dict = [movie.id for movie in Movie.objects.all()]
-
-        reader = csv.DictReader(decoded_file)
-        for row in reader:
-            if self.csv_validator(row, model, movies_dict):
-                values = list(row.values())
-                rows.append(values)
-                data_count += 1
-            else:
-                failures += 1
-             
-            if len(rows) >= batch_size:
-                print(f'Inserindo registros')
-                self.bulk_insert(model, rows, columns)
-                rows = []  
-        
-        if rows:
-            self.bulk_insert(model, rows, columns)
-    
-        end = time.time()
-        self.create_log(end-start, data_count, failures, file, model)
-
-    def handle_movie_depedent_file(self, file, model, columns):
-        start = time.time()
-        
-        movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
-        
-        decoded_file = file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(decoded_file)
-        
-        batch_size = 10000 
-        rows = []
-        failures = 0
-        data_count = 0
-
-        print('Iniciando a leitura do arquivo')
-        for row in reader:
-            movieId = row.get('movieId', None)
-            if 'timestamp' in row.keys():
-                timestamp = row.pop('timestamp')
-            
-            if movieId and re.match(r'^\d+$', timestamp) and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
-                if self.csv_validator(row, model, movies_dict):
-                    if timestamp:
-                        timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-                        timestamp = pytz.utc.localize(timestamp)
-                
-                    values = list(row.values())
-                    if timestamp:
-                        values.append(timestamp)    
-                    rows.append(values)
-                    data_count += 1
-                else:
-                    failures += 1
-            else:
-                failures += 1
-                
-            if len(rows) >= batch_size:
-                print(f'Inserindo registros')
-                self.bulk_insert(model, rows, columns)
-                rows = []  
-
-        if rows:
-            print(f'Inserindo registros')
-            self.bulk_insert(model, rows, columns)
-        
-        end = time.time()
-        self.create_log(end-start, data_count, failures, file, model)
-    
-    
-    def handle_link_file(self, file, model, columns):
-        start = time.time()
-        
-        movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
-        
-        decoded_file = file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(decoded_file)
-        
-        batch_size = 10000 
-        rows = []
-        failures = 0
-        data_count = 0
-
-        print('Iniciando a leitura do arquivo')
-        for row in reader:
-            movieId = row.get('movieId', None)
-            
-            if movieId and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
-                if self.csv_validator(row, model, movies_dict):
-                    values = list(row.values()) 
-                    rows.append(values)
-                    data_count += 1
-                else:
-                    failures += 1
-            else:
-                failures += 1
-                
-            if len(rows) >= batch_size:
-                print(f'Inserindo registros')
-                self.bulk_insert(model, rows, columns)
-                rows = []  
-
-        if rows:
-            print(f'Inserindo registros')
-            self.bulk_insert(model, rows, columns)
-        
-        end = time.time()
-        self.create_log(end-start, data_count, failures, file, model)
-    
-    def bulk_insert(self, model, rows, columns):
-        table_name = model._meta.db_table
-        
-        sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES (%s)"
-        
-        placeholders = ", ".join(["%s"] * len(columns))
-        
-        with connection.cursor() as cursor:
-            cursor.executemany(sql % placeholders, rows)
-                
-    def handle_tag_depedent_file(self, file, model, columns):
-        start = time.time()
-        decoded_file = file.read().decode('utf-8').splitlines()
-        
-        tags_dict = {tag.id: tag.id for tag in Tag.objects.all()}
-        movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
-        batch_size = 10000 
-        rows = []
-        failures = 0
-        data_count = 0
-        
-        reader = csv.DictReader(decoded_file)
-        for row in reader:
-            tagId = row.get('tagId', None)
-            if int(tagId) in tags_dict.keys():
-                if self.csv_validator(row, model, movies_dict):
-                    values = list(row.values())
-                    rows.append(values)
-                    data_count += 1
-                else:
-                    failures += 1
-            else:
-                failures += 1
-                
-            if len(rows) >= batch_size:
-                print(f'Inserindo registros')
-                self.bulk_insert(model, rows, columns)
-                rows = []  
-                
-        if rows:
-            print(f'Inserindo registros')
-            self.bulk_insert(model, rows, columns)
-                
-        end = time.time()
-        self.create_log(end-start, data_count, failures, file, model)
-    
-    def create_log(self, time, data_quantity, registry_erros_number, file, model):
-        MovieMigration.objects.create(total_time=time, data_quantity=data_quantity, registry_erros_number=registry_erros_number, file=file, model=model._meta.verbose_name_plural.title())
-
-class MigrationView(FormView, CSVHandlerMixIn):
+class MigrationView(FormView):
     template_name = "base.html"
     form_class = MigrationForm
     success_url = "/"
@@ -258,25 +19,39 @@ class MigrationView(FormView, CSVHandlerMixIn):
         data_type = form.cleaned_data['data_type']
         file = form.cleaned_data['file']
         
+        migration = MovieMigration.objects.create(file=file)
         if data_type == 'movie':
-            self.handle_movie_file(file, Movie, ['id', 'title', 'genres'])
-        if data_type == 'ratings':
-            self.handle_movie_depedent_file(file, Rating, ['user_id', 'movie_id', 'rating', 'timestamp'])
-        if data_type == 'links':
-            self.handle_link_file(file, Link, ['movie_id', 'imdb_id', 'tmdb_id'])
-        if data_type == 'tags':
-            self.handle_movie_depedent_file(file, Tag, ['user_id', 'movie_id', 'tag', 'timestamp'])
-        if data_type == 'genome_tags':
-            self.handle_tag_depedent_file(file, GenomeTag, ['tag_id', 'tag_details'])
-        if data_type == 'genome_scores':
-            self.handle_tag_depedent_file(file, GenomeScore,  ['movie_id', 'tag_id', 'relevance'])
+            migration.model = Movie._meta.verbose_name_plural.title()
+            migration.save()
+            handle_movie_file.delay(migration.id, ['id', 'title', 'genres'])
+        elif data_type == 'ratings':
+            migration.model = Rating._meta.verbose_name_plural.title()
+            migration.save()
+            handle_movie_depedent_file.delay(migration.id, ['user_id', 'movie_id', 'rating', 'timestamp'])
+        elif data_type == 'tags':
+            migration.model = Tag._meta.verbose_name_plural.title()
+            migration.save()
+            handle_movie_depedent_file.delay(migration.id, ['user_id', 'movie_id', 'tag', 'timestamp'])
+        elif data_type == 'links':
+            migration.model = Link._meta.verbose_name_plural.title()
+            migration.save()
+            handle_link_file.delay(migration.id, ['movie_id', 'imdb_id', 'tmdb_id'])
+        elif data_type == 'genome_tags':
+            migration.model = GenomeTag._meta.verbose_name_plural
+            migration.save()
+            handle_tag_depedent_file.delay(migration.id, ['tag_id', 'tag_details'])
+        elif data_type == 'genome_scores':
+            migration.model = GenomeScore._meta.verbose_name_plural
+            migration.save()
+            print(migration.model)
+            handle_tag_depedent_file.delay(migration.id, ['movie_id', 'tag_id', 'relevance'])
         
         return super().form_valid(form)
 
 class InfoFile(FilterView):
     template_name = "migrations/migration_list.html"
     model = MovieMigration
-    paginate_by = 1
+    paginate_by = 10
     filterset_class = MigrationFilterSet
     context_object_name = 'migrations'
     
