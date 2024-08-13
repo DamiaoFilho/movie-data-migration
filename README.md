@@ -29,3 +29,35 @@ O projeto utiliza o [MovieLens 20M Dataset](https://grouplens.org/datasets/movie
 ## Diagrama Lógico
 
 ![movie_data_migration](https://github.com/user-attachments/assets/dc94d6a0-a590-4e8a-a88e-f391b991141b)
+
+## Passos para Executar o Projeto
+
+1. **Baixar Dependências**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2. **Criar e Executar Migrações**:
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
+
+3. **Criar Superuser (Opcional)**:
+    ```bash
+    python manage.py createsuperuser
+    ```
+
+4. **Instalar Redis para Windows**:
+    - Faça o download do Redis para Windows através do seguinte link: [Redis-x64-5.0.14.1.msi](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+    - Execute o instalador e siga as instruções para completar a instalação.
+
+5. **Iniciar o Servidor Django**:
+    ```bash
+    python manage.py runserver
+    ```
+
+6. **Executar o Worker Celery**:
+    ```bash
+    celery -A project.celery worker --pool=solo -l info
+    ```
