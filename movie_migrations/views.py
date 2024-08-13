@@ -35,7 +35,7 @@ class MigrationView(FormView):
         elif data_type == 'links':
             migration.model = Link._meta.verbose_name_plural.title()
             migration.save()
-            handle_link_file(migration.id, ['movie_id', 'imdb_id', 'tmdb_id'])
+            handle_link_file.delay(migration.id, ['movie_id', 'imdb_id', 'tmdb_id'])
         elif data_type == 'genome_tags':
             migration.model = GenomeTag._meta.verbose_name_plural
             migration.save()

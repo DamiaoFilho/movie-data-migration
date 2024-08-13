@@ -131,10 +131,11 @@ def handle_movie_depedent_file(migration_id, columns):
 
     for row in reader:
         movieId = row.get('movieId', None)
+        timestamp = None
         if 'timestamp' in row.keys():
             timestamp = row.pop('timestamp')
         
-        if movieId and re.match(r'^\d+$', timestamp) and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
+        if movieId and timestamp and re.match(r'^\d+$', timestamp) and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
             if csv_validator(row, model, movies_dict):
                 if timestamp:
                     timestamp = datetime.datetime.fromtimestamp(int(timestamp))
@@ -240,7 +241,7 @@ def handle_tag_depedent_file(migration_id, columns):
     print(model)
     for row in reader:
         tagId = row.get('tagId', None)
-        if int(tagId) in tags_dict.keys():
+        if tagId and int(tagId) in tags_dict.keys():
             if csv_validator(row, model, movies_dict):
                 values = list(row.values())
                 rows.append(values)
