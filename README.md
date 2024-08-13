@@ -6,7 +6,7 @@ O **Movie Data Migration** é um projeto desenvolvido para realizar migrações 
 
 - **Visualização das Informações da Migração**: Exibe detalhes como o arquivo utilizado, tempo de processamento, número de erros, quantidade de dados inseridos e tabela de destino.
 - **Detalhes dos Filmes**: Permite a visualização de filmes cadastrados com detalhes adicionais fornecidos por uma API.
-- **Filtragem e Paginação**: Oferece a capacidade de filtrar e paginar a lista de filmes.
+- **Filtragem e Paginação**: Oferece a capacidade de filtrar e paginar a lista de filmes e migrações.
 
 ## Referência do Dataset
 
@@ -21,8 +21,8 @@ O projeto utiliza o [MovieLens 20M Dataset](https://grouplens.org/datasets/movie
 ## Passos Seguidos
 
 1. **Criação de Inserções de Dados**: Utilização de SQL nativo e o método `executemany` do Django para otimizar a inserção de grandes volumes de dados no banco.
-2. **Validação de Dados**: Implementação de validações rigorosas para garantir a integridade dos dados importados.
-3. **Registro de Dados de Migração**: Desenvolvimento de uma funcionalidade para registrar e monitorar o progresso das migrações.
+2. **Validação de Dados**: Implementação de validações de formato para garantir a integridade dos dados importados.
+3. **Registro de Dados de Migração**: Desenvolvimento da funcionalidade de registrar dados relevantes de migrações.
 4. **Configuração do Celery e Redis**: Integração do Celery e Redis para gerenciar tarefas assíncronas de processamento de dados.
 5. **Criação de Interfaces de Upload e Listagem**: Desenvolvimento de telas para upload de arquivos, visualização dos dados de migração e listagem de filmes com filtros e paginação.
 
