@@ -6,9 +6,11 @@ from links.models import Link
 from tags.models import Tag, GenomeScore, GenomeTag
 from .models import MovieMigration
 from django_filters.views import FilterView
-from .filtersets import MigrationFilterSet
+from django.views.generic import ListView
+from .filtersets import MigrationFilterSet, MovieFilterSet
+from django.db.models import Avg, Count
 from .celery import handle_movie_file, handle_movie_depedent_file, handle_link_file, handle_tag_depedent_file
-
+from django.db import models
 
 class MigrationView(FormView):
     template_name = "base.html"
@@ -23,7 +25,7 @@ class MigrationView(FormView):
         if data_type == 'movie':
             migration.model = Movie._meta.verbose_name_plural.title()
             migration.save()
-            handle_movie_file.delay(migration.id, ['id', 'title', 'genres'])
+            handle_movie_file.delay(migration.id, ['id', 'title', 'genres', 'release_year'])
         elif data_type == 'ratings':
             migration.model = Rating._meta.verbose_name_plural.title()
             migration.save()
@@ -48,12 +50,24 @@ class MigrationView(FormView):
         
         return super().form_valid(form)
 
-class InfoFile(FilterView):
-    template_name = "migrations/migration_list.html"
+class InfoFile(FilterView, ListView):
+    template_name = "table_file.html"
     model = MovieMigration
-    paginate_by = 10
+    paginate_by = 15
     filterset_class = MigrationFilterSet
     context_object_name = 'migrations'
+
     
+class MovieListView(FilterView, ListView):
+    model = Movie
+    template_name = 'table_movies.html'
+    context_object_name = 'movies'
+    paginate_by = 15
+    filterset_class = MovieFilterSet
+
     def get_queryset(self):
-        return MovieMigration.objects.all()
+        queryset = Movie.objects.all().annotate(
+            rating_avg = Avg('rating__rating'),
+            rating_count = Count('rating')
+        )
+        return queryset

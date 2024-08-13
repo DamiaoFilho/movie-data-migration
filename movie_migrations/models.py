@@ -5,9 +5,10 @@ from django.db import models
 class MovieMigration(models.Model):
     
     class Status(models.TextChoices):
-        COMPLETED = 'COMPLETED', 'Concluído'
-        PROCESSING = 'PROCESSING', 'Processando'
-
+        PROCESSING = 'processing', 'Processando'
+        COMPLETED = 'completed', 'Concluído'
+        ERROR = 'error', 'Erro'
+    
     
     total_time = models.FloatField(verbose_name="Tempo total", default=0)
     data_quantity = models.IntegerField(verbose_name="Quantidade de dados", default=0)

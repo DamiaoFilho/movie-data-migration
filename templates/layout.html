@@ -5,8 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MovieMi</title>
-    {% block css %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    {% block css %}
     {% endblock css %}
   </head>
   <body classNm="bg-black">
@@ -18,15 +18,7 @@
         <div class="menu"> 
           <a href="{% url 'migration-form' %}" id="add-movie">Adicionar Arquivos</a>
           <a href="{% url 'file-info' %}" >Migrações</a>
-          <div class="dropdown">
-            <button class="dropbtn">Arquivos Salvos</button>
-            <div class="dropdown-content">
-              <a href="file-info">Avaliações</a>
-              <a href="#">Links</a>
-              <a href="#">Tags</a>
-              <a href="#">Genome Tags</a>
-              <a href="#">Genome Score</a>
-            </div>
+          <a href="{% url 'titles-list' %}" >Filmes</a>
         </div>
       </nav>
     </header>

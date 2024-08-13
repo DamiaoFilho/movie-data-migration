@@ -1,0 +1,81 @@
+{% if is_paginated %}
+<div class="pagination">
+  <span class="step-links">
+    {% if page_obj.has_previous %}
+    <a
+      href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+      ><svg
+        height="22px"
+        width="22px"
+        version="1.1"
+        id="Layer_1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        viewBox="0 0 512 512"
+        xml:space="preserve"
+        fill="#000000"
+        transform="rotate(180)"
+      >
+        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+        <g
+          id="SVGRepo_tracerCarrier"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ></g>
+        <g id="SVGRepo_iconCarrier">
+          <path
+            style="fill: #2d2d2d"
+            d="M256,0C114.608,0,0,114.608,0,256c0,141.376,114.608,256,256,256s256-114.624,256-256 C512,114.608,397.392,0,256,0z"
+          ></path>
+          <g style="opacity: 0.2">
+            <polygon
+              points="230.656,111.936 394.016,272 230.656,432.064 181.856,382.096 294.208,272 181.856,161.904 "
+            ></polygon>
+          </g>
+          <polygon
+            style="fill: #ffffff"
+            points="214.656,95.936 378.016,256 214.656,416.064 165.856,366.096 278.208,256 165.856,145.904 "
+          ></polygon>
+        </g></svg
+    ></a>
+    {% endif %}
+
+    <span class="current">
+      {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+    <a
+      href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+    >
+      <svg
+        height="22px"
+        width="22px"
+        version="1.1"
+        id="Layer_1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        viewBox="0 0 512 512"
+        xml:space="preserve"
+      >
+        <path
+          style="fill: #2d2d2d"
+          d="M256,0C114.608,0,0,114.608,0,256c0,141.376,114.608,256,256,256s256-114.624,256-256
+     C512,114.608,397.392,0,256,0z"
+        />
+        <g style="opacity: 0.2">
+          <polygon
+            points="230.656,111.936 394.016,272 230.656,432.064 181.856,382.096 294.208,272 181.856,161.904 	"
+          />
+        </g>
+        <polygon
+          style="fill: #ffffff"
+          points="214.656,95.936 378.016,256 214.656,416.064 165.856,366.096 278.208,256 165.856,145.904 
+     "
+        />
+      </svg>
+    </a>
+    {% endif %}
+  </span>
+</div>
+{% endif %}
