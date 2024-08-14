@@ -76,6 +76,19 @@ def csv_validator(row, model, instances):
         
     
     return True
+
+def execute(model, rows, columns):
+    sql = f"INSERT INTO {model._meta.db_table} ({', '.join(columns)}) VALUES {', '.join(rows)}"
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        
+def update_migration(migration, data_count, failures, start):
+    end = time.time()
+    migration.total_time = end-start
+    migration.data_quantity = data_count
+    migration.registry_erros_number = failures
+    migration.status = MovieMigration.Status.COMPLETED
+    migration.save()
     
 @shared_task
 def handle_movie_file(migration_id, columns):
@@ -85,38 +98,41 @@ def handle_movie_file(migration_id, columns):
     reader = csv.DictReader(decoded_file)
     
     batch_size = 10000 
+    failures, data_count = 0, 0
     rows = []
-    failures = 0
-    data_count = 0
     
     movies_dict = [movie.id for movie in Movie.objects.all()]
 
     for row in reader:
         if csv_validator(row, Movie, movies_dict):
+            
             match = re.search(r'\b(19|20)\d{2}\b', row['title'])
+            
             if match:
                 row['release_year'] = match.group(0)
             else:
-                row['release_year'] = None
-            values = list(row.values())
-            rows.append(values)
+                row['release_year'] = 'null'
+                
+            row['title'] = row['title'].replace("'", "''")
+            row['genres'] = row['genres'].replace("'", "''")
+            
+            rows.append(
+                f"({row['movieId']}, '{row['title']}', '{row['genres']}', {row['release_year']})"
+            )
             data_count += 1
+            
         else:
             failures += 1
-            
+        
         if len(rows) >= batch_size:
-            bulk_insert(Movie, rows, columns)
-            rows = []  
+            execute(Movie, rows, columns)
+            rows = []
     
     if rows:
-        bulk_insert(Movie, rows, columns)
+        execute(Movie, rows, columns)
+        rows = []
 
-    end = time.time()
-    migration.total_time = end-start
-    migration.data_quantity = data_count
-    migration.registry_erros_number = failures
-    migration.status = MovieMigration.Status.COMPLETED
-    migration.save()
+    update_migration(migration, data_count, failures, start)
 
 @shared_task
 def handle_movie_depedent_file(migration_id, columns):
@@ -134,44 +150,43 @@ def handle_movie_depedent_file(migration_id, columns):
     
     batch_size = 10000 
     rows = []
-    failures = 0
-    data_count = 0
+    failures, data_count = 0, 0
 
     for row in reader:
         movieId = row.get('movieId', None)
-        timestamp = None
-        if 'timestamp' in row.keys():
-            timestamp = row.pop('timestamp')
+        timestamp = row.pop('timestamp', None)
         
         if movieId and timestamp and re.match(r'^\d+$', timestamp) and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
             if csv_validator(row, model, movies_dict):
-                if timestamp:
-                    timestamp = datetime.datetime.fromtimestamp(int(timestamp))
-                    timestamp = pytz.utc.localize(timestamp)
-            
-                values = list(row.values())
-                if timestamp:
-                    values.append(timestamp)    
-                rows.append(values)
+                timestamp = datetime.datetime.fromtimestamp(int(timestamp))
+                timestamp = pytz.utc.localize(timestamp)
+                                       
+                if model == Tag:
+                    row['tag'] = row['tag'].replace("'", "''")
+                    rows.append(
+                        f"({row['userId']}, {row['movieId']}, '{row['tag']}', '{timestamp}')"
+                    )
+                else:
+                    rows.append(
+                        f"({row['userId']}, {row['movieId']}, {row['rating']}, '{timestamp}')"
+                    )
                 data_count += 1
+                
             else:
                 failures += 1
+                
         else:
             failures += 1
             
         if len(rows) >= batch_size:
-            bulk_insert(model, rows, columns)
+            execute(model, rows, columns)
             rows = []  
 
     if rows:
-        bulk_insert(model, rows, columns)
+        execute(model, rows, columns)
+        rows = []
     
-    end = time.time()
-    migration.total_time = end-start
-    migration.data_quantity = data_count
-    migration.registry_erros_number = failures
-    migration.status = MovieMigration.Status.COMPLETED
-    migration.save()
+    update_migration(migration, data_count, failures, start)
 
 @shared_task
 def handle_link_file(migration_id, columns):
@@ -187,16 +202,16 @@ def handle_link_file(migration_id, columns):
     
     batch_size = 10000 
     rows = []
-    failures = 0
-    data_count = 0
+    failures, data_count = 0, 0
 
     for row in reader:
         movieId = row.get('movieId', None)
         
         if movieId and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
             if csv_validator(row, model, movies_dict):
-                values = list(row.values()) 
-                rows.append(values)
+                rows.append(
+                    f"({row['movieId']}, {row['imdbId']}, {row['tmdbId']})"
+                )
                 data_count += 1
             else:
                 failures += 1
@@ -204,29 +219,14 @@ def handle_link_file(migration_id, columns):
             failures += 1
             
         if len(rows) >= batch_size:
-            bulk_insert(model, rows, columns)
+            execute(model, rows, columns)
             rows = []  
 
     if rows:
-        bulk_insert(model, rows, columns)
+        execute(model, rows, columns)
+        rows = []
     
-    end = time.time()
-    migration.total_time = end-start
-    migration.data_quantity = data_count
-    migration.registry_erros_number = failures
-    migration.status = MovieMigration.Status.COMPLETED
-    migration.save()
-
-@shared_task
-def bulk_insert(model, rows, columns):
-    table_name = model._meta.db_table
-    
-    sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES (%s)"
-    
-    placeholders = ", ".join(["%s"] * len(columns))
-    
-    with connection.cursor() as cursor:
-        cursor.executemany(sql % placeholders, rows)
+    update_migration(migration, data_count, failures, start)
 
 @shared_task
 def handle_tag_depedent_file(migration_id, columns):
@@ -238,21 +238,28 @@ def handle_tag_depedent_file(migration_id, columns):
     
     tags_dict = {tag.id: tag.id for tag in Tag.objects.all()}
     movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
+    
     batch_size = 10000 
     rows = []
-    failures = 0
-    data_count = 0
+    failures, data_count = 0, 0
     
     model = GenomeTag
     if migration.model == 'Pontuações do Genoma':
         model = GenomeScore
-    print(model)
+        
     for row in reader:
         tagId = row.get('tagId', None)
         if tagId and int(tagId) in tags_dict.keys():
             if csv_validator(row, model, movies_dict):
-                values = list(row.values())
-                rows.append(values)
+                if model == GenomeTag:
+                    row['tag'] = row['tag'].replace("'", "''")
+                    rows.append(
+                        f"({row['tagId']}, '{row['tag']}')"
+                    )
+                else: 
+                    rows.append(
+                        f"({row['movieId']}, {row['tagId']}, {row['relevance']})"
+                    )
                 data_count += 1
             else:
                 failures += 1
@@ -260,16 +267,11 @@ def handle_tag_depedent_file(migration_id, columns):
             failures += 1
             
         if len(rows) >= batch_size:
-            bulk_insert(model, rows, columns)
+            execute(model, rows, columns)
             rows = []  
             
     if rows:
-        bulk_insert(model, rows, columns)
-            
-    end = time.time()
+        execute(model, rows, columns)
+        row = []
 
-    migration.total_time = end-start
-    migration.data_quantity = data_count
-    migration.registry_erros_number = failures
-    migration.status = MovieMigration.Status.COMPLETED
-    migration.save()
+    update_migration(migration, data_count, failures, start)
