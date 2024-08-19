@@ -1,5 +1,3 @@
-
-import sys
 from movies.models import Movie
 from ratings.models import Rating
 from links.models import Link
@@ -25,9 +23,6 @@ def csv_validator(row, model, instances):
         if not re.match(r'^\d+$', row['movieId']):
             return False
         
-        if int(row['movieId']) in instances:
-            return False
-        
         if not re.match(r'^[\w\-]+(\|[\w\-]+)*$', row['genres']):
             return False
 
@@ -38,7 +33,6 @@ def csv_validator(row, model, instances):
         
         if not re.match(r'^\d+$', row['userId']):
             return False
-        
         
         if float(row['rating']) < 0 or float(row['rating']) > 5:
             return False
@@ -78,9 +72,10 @@ def csv_validator(row, model, instances):
     return True
 
 def execute(model, rows, columns):
-    sql = f"INSERT INTO {model._meta.db_table} ({', '.join(columns)}) VALUES {', '.join(rows)}"
+    sql = f"INSERT INTO {model._meta.db_table} ({', '.join(columns)}) VALUES {', '.join(rows)} ON CONFLICT DO NOTHING"
     with connection.cursor() as cursor:
         cursor.execute(sql)
+        return cursor.rowcount
         
 def update_migration(migration, data_count, failures, start):
     end = time.time()
@@ -97,10 +92,11 @@ def handle_movie_file(migration_id, columns):
     decoded_file = migration.file.read().decode('utf-8').splitlines()
     reader = csv.DictReader(decoded_file)
     
-    batch_size = 10000 
+    batch_size = 20000 
     failures, data_count = 0, 0
-    rows = []
-    
+    rows = set()
+    teste_count = 0
+
     movies_dict = [movie.id for movie in Movie.objects.all()]
 
     for row in reader:
@@ -116,7 +112,7 @@ def handle_movie_file(migration_id, columns):
             row['title'] = row['title'].replace("'", "''")
             row['genres'] = row['genres'].replace("'", "''")
             
-            rows.append(
+            rows.add(
                 f"({row['movieId']}, '{row['title']}', '{row['genres']}', {row['release_year']})"
             )
             data_count += 1
@@ -125,13 +121,14 @@ def handle_movie_file(migration_id, columns):
             failures += 1
         
         if len(rows) >= batch_size:
-            execute(Movie, rows, columns)
-            rows = []
+            teste_count += execute(Movie, rows, columns)
+            rows = set()
     
     if rows:
-        execute(Movie, rows, columns)
-        rows = []
+        teste_count += execute(Movie, rows, columns)
+        rows = set()
 
+    print(teste_count)
     update_migration(migration, data_count, failures, start)
 
 @shared_task
@@ -148,8 +145,8 @@ def handle_movie_depedent_file(migration_id, columns):
     if migration.model == 'Avaliações':
         model = Rating
     
-    batch_size = 10000 
-    rows = []
+    batch_size = 20000 
+    rows = set()
     failures, data_count = 0, 0
 
     for row in reader:
@@ -163,11 +160,11 @@ def handle_movie_depedent_file(migration_id, columns):
                                        
                 if model == Tag:
                     row['tag'] = row['tag'].replace("'", "''")
-                    rows.append(
+                    rows.add(
                         f"({row['userId']}, {row['movieId']}, '{row['tag']}', '{timestamp}')"
                     )
                 else:
-                    rows.append(
+                    rows.add(
                         f"({row['userId']}, {row['movieId']}, {row['rating']}, '{timestamp}')"
                     )
                 data_count += 1
@@ -180,11 +177,11 @@ def handle_movie_depedent_file(migration_id, columns):
             
         if len(rows) >= batch_size:
             execute(model, rows, columns)
-            rows = []  
+            rows = set()  
 
     if rows:
         execute(model, rows, columns)
-        rows = []
+        rows = set()
     
     update_migration(migration, data_count, failures, start)
 
@@ -201,7 +198,7 @@ def handle_link_file(migration_id, columns):
     reader = csv.DictReader(decoded_file)
     
     batch_size = 10000 
-    rows = []
+    rows = set()
     failures, data_count = 0, 0
 
     for row in reader:
@@ -209,7 +206,7 @@ def handle_link_file(migration_id, columns):
         
         if movieId and re.match(r'^\d+$', row['movieId']) and int(movieId) in movies_dict.keys():
             if csv_validator(row, model, movies_dict):
-                rows.append(
+                rows.add(
                     f"({row['movieId']}, {row['imdbId']}, {row['tmdbId']})"
                 )
                 data_count += 1
@@ -220,11 +217,11 @@ def handle_link_file(migration_id, columns):
             
         if len(rows) >= batch_size:
             execute(model, rows, columns)
-            rows = []  
+            rows = set()  
 
     if rows:
         execute(model, rows, columns)
-        rows = []
+        rows = set()
     
     update_migration(migration, data_count, failures, start)
 
@@ -240,7 +237,7 @@ def handle_tag_depedent_file(migration_id, columns):
     movies_dict = {movie.id: movie.id for movie in Movie.objects.all()}
     
     batch_size = 10000 
-    rows = []
+    rows = set()
     failures, data_count = 0, 0
     
     model = GenomeTag
@@ -253,11 +250,11 @@ def handle_tag_depedent_file(migration_id, columns):
             if csv_validator(row, model, movies_dict):
                 if model == GenomeTag:
                     row['tag'] = row['tag'].replace("'", "''")
-                    rows.append(
+                    rows.add(
                         f"({row['tagId']}, '{row['tag']}')"
                     )
                 else: 
-                    rows.append(
+                    rows.add(
                         f"({row['movieId']}, {row['tagId']}, {row['relevance']})"
                     )
                 data_count += 1
@@ -268,10 +265,10 @@ def handle_tag_depedent_file(migration_id, columns):
             
         if len(rows) >= batch_size:
             execute(model, rows, columns)
-            rows = []  
+            rows = set()  
             
     if rows:
         execute(model, rows, columns)
-        row = []
+        rows = set()
 
     update_migration(migration, data_count, failures, start)

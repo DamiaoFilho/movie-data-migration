@@ -44,11 +44,15 @@ table {
   border-spacing: 10px;
 }
 
-th,
-td {
+th, td {
   text-align: center;
   padding: 10px;
   /* border-bottom: 1px solid #ddd;  */
+}
+
+td a {
+  text-decoration: none;
+  color: white;
 }
 
 thead th {

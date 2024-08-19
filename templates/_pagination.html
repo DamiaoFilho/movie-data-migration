@@ -3,7 +3,7 @@
   <span class="step-links">
     {% if page_obj.has_previous %}
     <a
-      href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+      href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
       ><svg
         height="22px"
         width="22px"
@@ -36,8 +36,8 @@
             style="fill: #ffffff"
             points="214.656,95.936 378.016,256 214.656,416.064 165.856,366.096 278.208,256 165.856,145.904 "
           ></polygon>
-        </g></svg
-    ></a>
+        </g></svg>
+      </a>
     {% endif %}
 
     <span class="current">
@@ -46,7 +46,7 @@
 
     {% if page_obj.has_next %}
     <a
-      href="?{% if filter.qs %}{{ filter.qs.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+      href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
     >
       <svg
         height="22px"
